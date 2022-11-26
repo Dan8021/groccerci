@@ -10,12 +10,32 @@ if(!isset($vid)){
    header('location:login.php');
 };
 
-if(isset($_GET['yes'])){
-   $pincode=0;
-   $did=0;
+if(isset($_GET['yes']))
+{
+   $yes = $_GET['yes'];
+   $get_pincode = $conn->prepare("SELECT pincode FROM orders WHERE id=? ");
+   $get_pincode->execute([$yes]);
+      while($row = $get_pincode->fetch(PDO::FETCH_ASSOC)){
+      $pincode= $row['pincode'];
+      }
+include ('allotdelivery.php');
+$new = new App\allotdelivery();
+$agentid = $new -> firstagent($pincode);
+$did = $agentid;
+
+if($did == 0)
+{
+   echo '<script>alert("No delivery Agent Found In Area Please Try Again Later")</script>';
+}
+
+else{
    $yes = $_GET['yes'];
    $accept_orders = $conn->prepare("UPDATE `orders` SET status = ? WHERE id = ?");
    $accept_orders->execute(['accepted',$yes]);
+   $allot_orders = $conn->prepare("UPDATE `orders` SET did=? WHERE id = ?");
+   $allot_orders->execute([$did,$yes]);
+   $change_status = $conn->prepare("UPDATE `delivery_agent` SET status='unavailable' WHERE did = ?");
+   $change_status->execute([$did]);
 
    $order_details = $conn->prepare("SELECT * FROM orders where vid=?");
          $order_details->execute([$vid]);
@@ -35,28 +55,7 @@ if(isset($_GET['yes'])){
             }
    $block_orders = $conn->prepare("UPDATE `orders` SET status = ? WHERE name=? and number=? and email=? and address=? and total_products=? and total_price=? and placed_on=? and status='requested' ");
    $block_orders->execute(['blocked',$name,$number,$email,$address,$total_products,$total_price,$placed_on]);
-
-
-   $get_pincode = $conn->prepare("SELECT pincode FROM orders WHERE id=? ");
-         $get_pincode->execute([$yes]);
-            while($row = $get_pincode->fetch(PDO::FETCH_ASSOC)){
-            $pincode= $row['pincode'];
-            }
-      include ('allotdelivery.php');
-      $new = new App\allotdelivery();
-      $agentid = $new -> firstagent($pincode);
-      $did = $agentid;
-      $allot_orders = $conn->prepare("UPDATE `orders` SET did=? WHERE id = ?");
-      $allot_orders->execute([$did,$yes]);
-      $change_status = $conn->prepare("UPDATE `delivery_agent` SET status='unavailable' WHERE did = ?");
-      $change_status->execute([$did]);
-
-
-
-   header('location:requested_orders.php');
-
-
-}
+         }}
 }
 
 if(isset($_GET['delete'])){
