@@ -13,7 +13,7 @@ before_script:
 
 test:
   script:
-    ./vendor/bin/phpunit ./tests/testtotal.php
+    . /vendor/bin/phpunit ./tests/testtotal.php
   artifacts:
     when: always
     reports:
